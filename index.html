@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0e7c86">
+<link rel="manifest" href="manifest.json">
+<title>十天语法沙龙 · 文法サロン</title>
+<style>
+  /* ===== 全局和风手帐风基调 ===== */
+  :root{
+    --paper:   #f4fbfc;  /* 海盐浅青背景 */
+    --ink:     #123c48;  /* 深海墨青文字 */
+    --accent:  #0e7c86;  /* 青绿主色（海浪） */
+    --blue:    #0e7c86;  /* 青绿（虚线边框） */
+    --softblue:#dff3f5;  /* 淡青底（未打卡） */
+    --line:    #c9e3e6;  /* 海雾分隔线 */
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family: system-ui, -apple-system, "Hiragino Sans", "Yu Gothic", "Noto Sans CJK JP", sans-serif;
+    line-height:1.6;
+    max-width:480px;          /* 手机竖屏优先，居中一列 */
+    margin:0 auto;
+    padding:18px 16px 40px;
+  }
+  /* 全屏背景图（固定定位层，位于内容下方） */
+  body::before{
+    content:"";
+    position:fixed; inset:0; z-index:-1;
+    background-image:url("微信图片_20260814172211_638_2.jpg");
+    background-size:cover;
+    background-position:center;
+    background-repeat:no-repeat;
+  }
+  /* 半透明遮罩层（让背景变浅，保证内容清晰可读） */
+  body::after{
+    content:"";
+    position:fixed; inset:0; z-index:-1;
+    background-color:rgba(244,251,252,.78);  /* 带一点海盐青的遮罩 */
+  }
+  /* 顶部海浪背景横幅（原图直接引用，不裁切） */
+  .hero-banner{
+    position:relative;
+    height:150px;
+    margin:-18px -16px 18px;
+    background-image:url("微信图片_20260814172211_638_2.jpg");
+    background-size:cover;
+    background-position:center;
+    border-radius:0 0 18px 18px;
+    box-shadow:0 4px 14px rgba(14,124,134,.25);
+  }
+  .hero-banner::after{
+    content:"";
+    position:absolute; inset:0;
+    background:linear-gradient(180deg, rgba(14,124,134,.15), rgba(14,124,134,.05));
+    border-radius:0 0 18px 18px;
+    pointer-events:none;
+  }
+
+  /* ===== 1. 顶部标题区 ===== */
+  .header{ text-align:center; margin-bottom:18px; }
+  .header h1{ font-size:22px; margin:0 0 4px; letter-spacing:1px; }
+  .header .subtitle{ color:var(--accent); font-size:14px; margin-bottom:10px; }
+  .quote{
+    font-size:13px; color:#7a6f5c; font-style:italic;
+    background:#fff7e9; border:1px dashed var(--line);
+    border-radius:10px; padding:8px 12px; margin:0 0 14px;
+  }
+  .progress-label{ font-size:13px; margin-bottom:6px; display:flex; justify-content:space-between; }
+  .progress-label .goal-tip{ color:var(--accent); }
+  .progress-bar{
+    height:14px; background:#efe7d6; border-radius:8px; overflow:hidden;
+    border:1px solid var(--line);
+  }
+  .progress-fill{
+    height:100%; width:0%; background:linear-gradient(90deg,#d9766f,var(--accent));
+    border-radius:8px; transition:width .5s ease;
+  }
+
+  /* ===== 2. 打卡操作区 ===== */
+  .checkin{ text-align:center; margin:22px 0; }
+  .counter{ display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:16px; }
+  .counter .lbl{ font-size:14px; }
+  .counter button{
+    width:34px; height:34px; border-radius:50%; border:1px solid var(--blue);
+    background:#fff; color:var(--blue); font-size:18px; line-height:1; cursor:pointer;
+  }
+  .counter input{
+    width:54px; text-align:center; font-size:16px; padding:6px 0;
+    border:1px solid var(--line); border-radius:8px; background:#fff; color:var(--ink);
+  }
+  .checkin-btn{
+    background:none; border:none; cursor:pointer;
+    display:inline-flex; align-items:center; justify-content:center;
+    margin:0 auto; padding:0;
+  }
+  .checkin-btn .wave-emoji{ font-size:60px; line-height:1; }
+  .checkin-btn.ended{
+    cursor:not-allowed;
+  }
+
+  /* ===== 3. 花苞印记 ===== */
+  .flowers{ display:flex; justify-content:center; gap:8px; margin:18px 0 6px; font-size:26px; }
+  .flowers span{ transition:transform .3s; }
+  .flowers span.bloom{ transform:scale(1.15); }
+
+  /* ===== 4. 打卡记录流 ===== */
+  .section-title{ font-size:16px; margin:26px 0 10px; border-bottom:1px dashed var(--line); padding-bottom:6px; }
+  .empty{ text-align:center; color:#9b9080; font-size:14px; padding:20px 0; }
+  .record{
+    background:#fff; border:1px solid var(--line); border-radius:12px;
+    padding:12px 14px; margin-bottom:12px; box-shadow:0 2px 6px rgba(0,0,0,.04);
+  }
+  .record .top{ display:flex; justify-content:space-between; align-items:center; }
+  .record .date{ font-size:15px; font-weight:bold; }
+  .record .right{ display:flex; align-items:center; gap:10px; }
+  .record .words{ font-size:14px; color:var(--ink); }
+  .record .stamp{
+    background:var(--accent); color:#fff; font-size:18px; font-weight:bold;
+    padding:4px 14px; border-radius:8px; transform:rotate(-6deg);
+    display:table; margin:6px auto 0;
+  }
+  .record .diary-toggle{ background:none; border:none; cursor:pointer; font-size:14px; color:var(--accent); padding:2px 4px; }
+  .record .diary-box{ display:none; margin-top:10px; }
+  .record .diary-box.open{ display:block; }
+  .record textarea{
+    width:100%; min-height:60px; border:1px solid var(--line); border-radius:8px;
+    padding:8px; font-family:inherit; font-size:14px; resize:vertical; color:var(--ink);
+  }
+  .record .diary-save{
+    margin-top:6px; background:var(--accent); color:#fff; border:none;
+    border-radius:8px; padding:6px 14px; font-size:13px; cursor:pointer;
+  }
+  .record .diary-text{ margin-top:8px; font-size:13px; color:#6b6253; }
+
+  /* ===== 5. 底部 ===== */
+  .footer{ text-align:center; color:#b3aa96; font-size:12px; margin-top:28px; }
+
+  /* ===== 自绘和风 toast（朱红印章感） ===== */
+  #toast{
+    position:fixed; left:50%; top:38%;
+    transform:translate(-50%,-50%) scale(.8);
+    background:var(--accent); color:#fff;
+    padding:14px 22px; border-radius:12px; font-size:15px; font-weight:bold;
+    box-shadow:0 6px 18px rgba(192,80,77,.4);
+    opacity:0; pointer-events:none; transition:opacity .25s, transform .25s;
+    z-index:999; text-align:center; max-width:80%;
+  }
+  #toast.show{ opacity:1; transform:translate(-50%,-50%) scale(1); }
+
+  /* ===== 打卡即时鼓励语（从浪花按钮上方弹出，逐渐变浅） ===== */
+  #cheerPopup{
+    position:fixed; left:50%; bottom:50%;
+    transform:translate(-50%,-50%) translateY(-20px);
+    background:linear-gradient(160deg,#19a6b4,#0e7c86);
+    color:#fff; font-size:17px; font-weight:bold;
+    padding:12px 20px; border-radius:14px;
+    box-shadow:0 6px 18px rgba(14,124,134,.35);
+    opacity:0; pointer-events:none; z-index:999;
+    transition:opacity .25s ease, transform .25s ease;
+    max-width:82%; text-align:center;
+    white-space:nowrap;
+  }
+  #cheerPopup.show{
+    opacity:1;
+    transform:translate(-50%,-50%) translateY(-90px);
+  }
+  #cheerPopup.fade{
+    opacity:0;
+    transform:translate(-50%,-50%) translateY(-130px);
+  }
+
+  /* ===== 激励弹窗 (Title Modal) ===== */
+  #titleModalOverlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.55);
+    z-index:1000; display:none; align-items:center; justify-content:center;
+  }
+  #titleModalOverlay.show{ display:flex; }
+
+  .title-modal-card{
+    background:#fffef7; border-radius:20px; padding:28px 24px 22px;
+    max-width:340px; width:90%; text-align:center;
+    box-shadow:0 8px 32px rgba(0,0,0,.18);
+    position:relative; z-index:1001;
+    animation: modalPopIn .4s cubic-bezier(.34,1.56,.64,1);
+  }
+  .title-modal-card.gold{
+    background:linear-gradient(135deg, #fff8d6, #ffeaa7, #fdcb6e);
+    border:2px solid #e1b12c;
+    box-shadow:0 0 40px rgba(253,203,110,.5), 0 8px 32px rgba(0,0,0,.18);
+  }
+  .title-modal-emoji{ font-size:52px; margin-bottom:8px; }
+  .title-modal-title{
+    font-size:24px; font-weight:bold; margin:0 0 6px; color:var(--ink);
+  }
+  .title-modal-card.gold .title-modal-title{ color:#8b6914; }
+  .title-modal-desc{
+    font-size:15px; color:#5a5040; margin-bottom:20px; line-height:1.6;
+  }
+  .title-modal-close{
+    background:var(--accent); color:#fff; border:none;
+    border-radius:12px; padding:10px 36px; font-size:15px; font-weight:bold;
+    cursor:pointer; transition:background .2s;
+  }
+  .title-modal-close:hover{ background:#a03f3d; }
+
+  @keyframes modalPopIn{
+    0%{ transform:scale(.5); opacity:0; }
+    100%{ transform:scale(1); opacity:1; }
+  }
+
+  /* 高级称号额外动画 */
+  .title-modal-card.glow{ animation: modalPopIn .4s cubic-bezier(.34,1.56,.64,1), titleGlow 1.5s ease-in-out infinite .4s; }
+  @keyframes titleGlow{
+    0%,100%{ box-shadow:0 0 20px rgba(253,203,110,.4), 0 8px 32px rgba(0,0,0,.18); }
+    50%{ box-shadow:0 0 45px rgba(253,203,110,.7), 0 8px 32px rgba(0,0,0,.18); }
+  }
+
+  .title-modal-card.pulse{ animation: modalPopIn .4s cubic-bezier(.34,1.56,.64,1), titlePulse 1.2s ease-in-out infinite .4s; }
+  @keyframes titlePulse{
+    0%,100%{ transform:scale(1); }
+    50%{ transform:scale(1.03); }
+  }
+
+  /* ===== 昵称输入弹窗 ===== */
+  #nicknameOverlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.55);
+    z-index:1003; display:none; align-items:center; justify-content:center;
+  }
+  #nicknameOverlay.show{ display:flex; }
+  .nickname-card{
+    background:#fffef7; border-radius:20px; padding:28px 24px 22px;
+    max-width:340px; width:90%; text-align:center;
+    box-shadow:0 8px 32px rgba(0,0,0,.18);
+    animation: modalPopIn .4s cubic-bezier(.34,1.56,.64,1);
+    border:2px solid var(--line);
+  }
+  .nickname-card .nickname-title{ font-size:18px; font-weight:bold; margin-bottom:6px; color:var(--ink); }
+  .nickname-card .nickname-sub{ font-size:13px; color:#9b9080; margin-bottom:16px; }
+  .nickname-card input{
+    width:80%; text-align:center; font-size:18px; padding:10px 14px;
+    border:2px solid var(--line); border-radius:12px; background:#fff; color:var(--ink);
+    margin-bottom:16px; outline:none;
+  }
+  .nickname-card input:focus{ border-color:var(--accent); }
+  .nickname-card .nickname-btn{
+    background:var(--accent); color:#fff; border:none;
+    border-radius:12px; padding:10px 36px; font-size:15px; font-weight:bold;
+    cursor:pointer; transition:background .2s;
+  }
+  .nickname-card .nickname-btn:hover{ background:#a03f3d; }
+
+  /* ===== 和风证书弹窗 ===== */
+  #certOverlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.6);
+    z-index:1000; display:none; align-items:center; justify-content:center;
+  }
+  #certOverlay.show{ display:flex; }
+
+  .cert-card{
+    background:linear-gradient(180deg, #fefdf7 0%, #faf6e9 30%, #fdf8ee 60%, #fefdf7 100%);
+    border-radius:4px;
+    max-width:400px; width:92%;
+    padding:0;
+    box-shadow:0 12px 48px rgba(0,0,0,.25);
+    position:relative;
+    animation: modalPopIn .5s cubic-bezier(.34,1.56,.64,1);
+    overflow:hidden;
+  }
+
+  /* 金框镶边 */
+  .cert-inner{
+    margin:12px;
+    border:3px solid #c9a84c;
+    border-radius:2px;
+    padding:28px 22px 22px;
+    position:relative;
+    background:transparent;
+  }
+  /* 四角装饰 */
+  .cert-inner::before,
+  .cert-inner::after{
+    content:""; position:absolute;
+    width:28px; height:28px;
+    border-color:#c9a84c; border-style:solid;
+  }
+  .cert-inner::before{
+    top:-3px; left:-3px;
+    border-width:4px 0 0 4px;
+  }
+  .cert-inner::after{
+    bottom:-3px; right:-3px;
+    border-width:0 4px 4px 0;
+  }
+
+  .cert-ribbon{
+    text-align:center; margin-bottom:14px;
+    font-size:12px; color:#9b9080; letter-spacing:2px;
+  }
+
+  .cert-title{
+    text-align:center;
+    font-size:28px; font-weight:bold;
+    color:#8b6914;
+    margin:0 0 18px;
+    letter-spacing:4px;
+    writing-mode:horizontal-tb;
+  }
+
+  .cert-body{
+    font-size:15px; color:var(--ink);
+    line-height:2.2;
+    text-align:center;
+  }
+  .cert-body .cert-label{ color:#9b9080; font-size:13px; margin-right:4px; }
+  .cert-body .cert-name{ font-size:20px; font-weight:bold; color:var(--ink); }
+  .cert-body .cert-count{ font-size:22px; font-weight:bold; color:var(--accent); }
+  .cert-body .cert-days{ font-size:22px; font-weight:bold; color:#2c3e50; }
+
+  /* 称号印章 */
+  .cert-seal{
+    display:table; margin:20px auto 10px;
+    background:var(--accent); color:#fff;
+    font-size:16px; font-weight:bold;
+    padding:8px 22px; border-radius:8px;
+    transform:rotate(-4deg);
+    box-shadow:0 3px 10px rgba(192,80,77,.35);
+    letter-spacing:2px;
+  }
+
+  .cert-date{
+    text-align:right; font-size:13px; color:#9b9080;
+    margin-top:16px;
+  }
+
+  .cert-actions{
+    text-align:center; margin-top:8px; padding-bottom:4px;
+  }
+  .cert-close-btn{
+    background:var(--accent); color:#fff; border:none;
+    border-radius:12px; padding:10px 36px; font-size:15px; font-weight:bold;
+    cursor:pointer; transition:background .2s;
+    margin:0 6px;
+  }
+  .cert-close-btn:hover{ background:#a03f3d; }
+  .cert-close-btn.ghost{
+    background:transparent; color:var(--accent);
+    border:1px solid var(--accent);
+  }
+  .cert-close-btn.ghost:hover{ background:rgba(192,80,77,.08); }
+
+  /* 截图提示 */
+  .cert-screenshot-tip{
+    text-align:center; font-size:11px; color:#b3aa96;
+    margin-top:8px; margin-bottom:4px;
+  }
+
+  /* 樱花飘落 */
+  #sakuraContainer{
+    position:fixed; inset:0; z-index:1002; pointer-events:none; overflow:hidden; display:none;
+  }
+  #sakuraContainer.active{ display:block; }
+
+  .sakura{
+    position:absolute; top:-60px; font-size:22px;
+    animation: sakuraFall linear forwards;
+    opacity:.85;
+  }
+  @keyframes sakuraFall{
+    0%{ transform:translateY(0) rotate(0deg) translateX(0); opacity:.9; }
+    25%{ transform:translateY(25vh) rotate(90deg) translateX(30px); }
+    50%{ transform:translateY(50vh) rotate(180deg) translateX(-20px); }
+    75%{ transform:translateY(75vh) rotate(270deg) translateX(25px); }
+    100%{ transform:translateY(105vh) rotate(360deg) translateX(-10px); opacity:0; }
+  }
+
+  /* ===== 今日总结按钮 ===== */
+  .summary-btn{
+    display:block; margin:14px auto 0;
+    background:#faf6e9; color:var(--blue);
+    border:2px solid var(--blue); border-radius:12px;
+    padding:10px 24px; font-size:15px; font-weight:bold;
+    cursor:pointer; transition:all .25s;
+    letter-spacing:1px;
+  }
+  .summary-btn:hover{ background:#eaf2fb; transform:translateY(-1px); }
+  .summary-btn.disabled{
+    background:#e8e4d8; color:#b3aa96; border-color:#cfc8b8;
+    cursor:not-allowed; pointer-events:none;
+  }
+
+  /* ===== 今日总结弹窗 ===== */
+  #summaryOverlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.55);
+    z-index:1004; display:none; align-items:center; justify-content:center;
+  }
+  #summaryOverlay.show{ display:flex; }
+
+  .summary-card{
+    background:#fffef7; border-radius:20px;
+    max-width:370px; width:90%; padding:28px 22px 22px;
+    text-align:center;
+    box-shadow:0 8px 36px rgba(0,0,0,.2);
+    animation: modalPopIn .4s cubic-bezier(.34,1.56,.64,1);
+    position:relative; overflow:hidden;
+    border:2px solid var(--line);
+  }
+
+  .summary-card .summary-title{
+    font-size:20px; font-weight:bold; color:var(--ink);
+    margin-bottom:4px;
+  }
+  .summary-card .summary-date{
+    font-size:14px; color:#9b9080; margin-bottom:12px;
+  }
+  .summary-card .summary-divider{
+    border:none; border-top:1px dashed var(--line);
+    margin:0 0 16px;
+  }
+
+  .summary-card .summary-big-num{
+    font-size:40px; font-weight:bold; color:var(--accent);
+    margin:0 0 4px; line-height:1.2;
+  }
+  .summary-card .summary-big-label{
+    font-size:14px; color:#5a5040; margin-bottom:16px;
+  }
+
+  /* 称号区域 */
+  .summary-card .summary-badge{
+    display:inline-block;
+    font-size:22px; font-weight:bold; color:var(--ink);
+    padding:8px 20px; border-radius:12px;
+    margin-bottom:8px;
+    position:relative;
+  }
+  .summary-card .summary-badge-text{
+    font-size:14px; color:#6b6253; line-height:1.6;
+    margin-bottom:18px; padding:0 8px;
+  }
+
+  /* 特效动画容器 */
+  .summary-effects{
+    position:absolute; inset:0; pointer-events:none; overflow:hidden; z-index:0;
+  }
+
+  /* 金色闪光动画 (神降臨) */
+  @keyframes goldFlash{
+    0%,100%{ opacity:0; transform:scale(.8); }
+    10%{ opacity:1; transform:scale(1.1); }
+    20%{ opacity:.6; transform:scale(1); }
+    30%{ opacity:1; transform:scale(1.05); }
+    40%{ opacity:.3; transform:scale(1); }
+    50%{ opacity:1; transform:scale(1.08); }
+    60%{ opacity:.5; transform:scale(1); }
+    70%{ opacity:1; transform:scale(1.04); }
+    80%{ opacity:.4; transform:scale(1); }
+    90%{ opacity:.8; transform:scale(1.02); }
+  }
+  .summary-card.gold-flash{
+    animation: modalPopIn .4s cubic-bezier(.34,1.56,.64,1), goldGlow 1s ease-in-out infinite .4s;
+  }
+  @keyframes goldGlow{
+    0%,100%{ box-shadow:0 0 20px rgba(253,203,110,.3), 0 8px 36px rgba(0,0,0,.2); }
+    50%{ box-shadow:0 0 50px rgba(253,203,110,.8), 0 0 30px rgba(255,215,0,.4), 0 8px 36px rgba(0,0,0,.2); }
+  }
+  .summary-spark{
+    position:absolute; font-size:28px;
+    animation: sparkFly 1.5s ease-out forwards;
+    opacity:0;
+  }
+  @keyframes sparkFly{
+    0%{ opacity:1; transform:translate(0,0) scale(1) rotate(0deg); }
+    50%{ opacity:.8; transform:translate(var(--dx),var(--dy)) scale(1.5) rotate(180deg); }
+    100%{ opacity:0; transform:translate(calc(var(--dx)*2),calc(var(--dy)*2)) scale(.3) rotate(360deg); }
+  }
+
+  /* 王冠掉落动画 (大波を乗りこなす者) */
+  @keyframes crownDrop{
+    0%{ transform:translateY(-80px) rotate(-20deg); opacity:0; }
+    40%{ transform:translateY(5px) rotate(5deg); opacity:1; }
+    60%{ transform:translateY(-10px) rotate(-3deg); opacity:1; }
+    80%{ transform:translateY(3px) rotate(2deg); opacity:1; }
+    100%{ transform:translateY(0) rotate(0deg); opacity:1; }
+  }
+  .summary-card .summary-badge.crown-anim{
+    animation: crownDrop .6s cubic-bezier(.34,1.56,.64,1) forwards;
+  }
+
+  /* 小鬼弹跳动画 (今日のMVP) */
+  @keyframes oniBounce{
+    0%{ transform:translateY(0) scale(1); }
+    15%{ transform:translateY(-25px) scale(1.1); }
+    30%{ transform:translateY(0) scale(.95); }
+    45%{ transform:translateY(-15px) scale(1.05); }
+    60%{ transform:translateY(0) scale(.98); }
+    75%{ transform:translateY(-6px) scale(1.02); }
+    100%{ transform:translateY(0) scale(1); }
+  }
+  .summary-card .summary-badge.oni-anim{
+    animation: oniBounce .8s ease-out forwards;
+  }
+
+  /* 花丸旋转动画 (やるじゃん) */
+  @keyframes flowerSpin{
+    0%{ transform:rotate(0deg) scale(0); opacity:0; }
+    60%{ transform:rotate(360deg) scale(1.2); opacity:1; }
+    100%{ transform:rotate(360deg) scale(1); opacity:1; }
+  }
+  .summary-card .summary-badge.flower-anim{
+    animation: flowerSpin .6s ease-out forwards;
+  }
+
+  /* 简单淡入 (今日も一歩前進) */
+  @keyframes simpleFadeIn{
+    0%{ opacity:0; transform:translateY(10px); }
+    100%{ opacity:1; transform:translateY(0); }
+  }
+  .summary-card .summary-badge.fade-anim{
+    animation: simpleFadeIn .5s ease-out forwards;
+  }
+
+  /* 关闭按钮 */
+  .summary-close-btn{
+    background:var(--accent); color:#fff; border:none;
+    border-radius:12px; padding:10px 36px; font-size:15px; font-weight:bold;
+    cursor:pointer; transition:background .2s; margin-top:4px;
+  }
+  .summary-close-btn:hover{ background:#a03f3d; }
+
+  /* ===== 备份按钮组 ===== */
+  .backup-group{
+    text-align:center; margin-top:18px; padding-top:14px;
+    border-top:1px dashed var(--line);
+  }
+  .backup-group .backup-label{
+    font-size:13px; color:#9b9080; margin-bottom:10px;
+  }
+  .backup-group button{
+    background:#fff; color:var(--blue);
+    border:1px solid var(--blue); border-radius:10px;
+    padding:8px 20px; font-size:13px; cursor:pointer;
+    margin:0 6px; transition:all .2s;
+  }
+  .backup-group button:hover{
+    background:var(--softblue); transform:translateY(-1px);
+  }
+  #importFile{ display:none; }
+</style>
+</head>
+<body>
+
+  <!-- 0. 顶部海浪横幅（原图） -->
+  <div class="hero-banner"></div>
+
+  <!-- 1. 顶部标题区 -->
+  <div class="header">
+    <h1 id="title">🌊 文法サロン</h1>
+    <div class="subtitle" id="subtitle">目標：10日間</div>
+    <div class="quote" id="quote"></div>
+    <div class="progress-label">
+      <span id="progressText">已坚持 0/7 天</span>
+      <span class="goal-tip" id="goalTip"></span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+
+  <!-- 2. 打卡操作区 -->
+  <div class="checkin">
+    <button class="checkin-btn" id="checkinBtn">
+      <span class="wave-emoji">🌊</span>
+    </button>
+    <button class="summary-btn" id="summaryBtn" disabled>📋 今日のまとめ</button>
+  </div>
+
+  <!-- 3. 花苞印记 -->
+  <div class="flowers" id="flowers"></div>
+
+  <!-- 4. 打卡记录流 -->
+  <div class="section-title">あなたの記録</div>
+  <div id="records"></div>
+
+  <!-- 5. 底部 -->
+  <div class="footer">🌊 十天语法沙龙 · 一起乘风破浪</div>
+
+  <!-- バックアップ（数据备份） -->
+  <div class="backup-group">
+    <div class="backup-label">💾 バックアップ</div>
+    <button id="exportBtn">📤 出力（导出）</button>
+    <button id="importBtn">📥 読込（导入）</button>
+    <input type="file" id="importFile" accept=".json">
+  </div>
+
+  <!-- 自绘 toast -->
+  <div id="toast"></div>
+
+  <!-- 打卡即时鼓励语 -->
+  <div id="cheerPopup"></div>
+
+  <!-- 樱花飘落容器 -->
+  <div id="sakuraContainer"></div>
+
+  <!-- 激励弹窗 -->
+  <div id="titleModalOverlay">
+    <div class="title-modal-card" id="titleModalCard">
+      <div class="title-modal-emoji" id="titleModalEmoji"></div>
+      <div class="title-modal-title" id="titleModalTitle"></div>
+      <div class="title-modal-desc" id="titleModalDesc"></div>
+      <button class="title-modal-close" id="titleModalClose">閉じる</button>
+    </div>
+  </div>
+
+  <!-- 昵称输入弹窗 -->
+  <div id="nicknameOverlay">
+    <div class="nickname-card">
+      <div class="nickname-title">あなたの名前は？</div>
+      <div class="nickname-sub">証明書に記載するニックネームを入力してください</div>
+      <input id="nicknameInput" type="text" placeholder="ニックネーム" maxlength="20">
+      <br>
+      <button class="nickname-btn" id="nicknameConfirm">確定</button>
+    </div>
+  </div>
+
+  <!-- 今日总结弹窗 -->
+  <div id="summaryOverlay">
+    <div class="summary-card" id="summaryCard">
+      <div class="summary-effects" id="summaryEffects"></div>
+      <div class="summary-title" id="summaryTitle"></div>
+      <div class="summary-date" id="summaryDate"></div>
+      <hr class="summary-divider">
+      <div class="summary-big-label">今日共学</div>
+      <div class="summary-big-num" id="summaryWords">0</div>
+      <div class="summary-big-label">个文法</div>
+      <div class="summary-badge" id="summaryBadge"></div>
+      <div class="summary-badge-text" id="summaryBadgeText"></div>
+      <button class="summary-close-btn" id="summaryClose">閉じる</button>
+    </div>
+  </div>
+
+  <!-- 和风证书弹窗 -->
+  <div id="certOverlay">
+    <div class="cert-card">
+      <div class="cert-inner">
+        <div class="cert-ribbon">🎐 文法サロン修了証 🎐</div>
+        <div class="cert-title">表 彰 状</div>
+        <div class="cert-body">
+          <span class="cert-label">氏　名</span>
+          <span class="cert-name" id="certName">---</span>
+          <br>
+          <span class="cert-label">累計文法数</span>
+          <span class="cert-count" id="certWords">0</span> 個
+          <br>
+          <span class="cert-label">継続日数</span>
+          <span class="cert-days" id="certDays">0</span> / 10 日
+        </div>
+        <div class="cert-seal" id="certSeal">---</div>
+        <div class="cert-date" id="certDate">---</div>
+      </div>
+      <div class="cert-actions">
+        <button class="cert-close-btn ghost" id="certClose">閉じる</button>
+      </div>
+      <div class="cert-screenshot-tip">📸 スクリーンショットで記念に残そう</div>
+    </div>
+  </div>
+
+<script>
+// ===== PWA Service Worker 注册 =====
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+/* =========================================================
+   配置变量（修改这里即可调整计划）
+   ========================================================= */
+const PLAN_NAME = "十天语法沙龙";   // 计划名称（同时作为 localStorage 键前缀）
+const PLAN_DAYS = 10;             // 计划天数（窗口长度）
+const PLAN_GOAL = 10;             // 目标总词数
+const PLAN_END  = "2026-08-27";   // 窗口硬截止日，之后一律「已截止」
+
+// 5 句日语鼓励语，刷新 / 打卡后随机切换
+const QUOTES = [
+  "一歩ずつ、確実に。",
+  "文法は海、毎日ひと波ずつ。",
+  "続ければ、道は必ず開ける。",
+  "小さな積み重ねが大きな差を生む。",
+  "今日の一文法が、明日の会話になる。"
+];
+
+// 打卡即时鼓励语（每次打卡随机弹出一句）
+const CHEER_MESSAGES = [
+  "又来打卡了吗？😉",
+  "真棒真棒👍🏻",
+  "者家军给我冲！😡",
+  "狠狠拿分！🥳",
+  "别放弃！😝",
+  "加一加一！",
+  "加一加一",
+  "加一加一",
+  "牛之牛之🍻",
+  "你可以啊！",
+  "优秀的你😼",
+  "掌管语法的神🤩"
+];
+
+// 称号阈值配置（从高到低排列，取第一个满足 min <= 词数的）
+const TITLE_THRESHOLDS = [
+  { min: 10,  title: "文法の王！", emoji: "👑⚡", desc: "もはや説明不要。あなたがルールだ。", cls: "gold", sakura: true },
+  { min: 5,   title: "大波を乗りこなす者！", emoji: "🌊", desc: "その勢い、誰にも止められない！", cls: "glow", sakura: false },
+  { min: 3,   title: "今日のMVP！", emoji: "👹", desc: "素晴らしい集中力！文法の鬼！", cls: "pulse", sakura: false },
+  { min: 2,   title: "やるじゃん！", emoji: "💮", desc: "コツコツが勝つコツ。その調子！", cls: "", sakura: false },
+  { min: 0,   title: "今日も一歩前進！", emoji: "🌱", desc: "小さな積み重ねが、大きな力に。", cls: "", sakura: false }
+];
+
+// localStorage 键名
+const STORAGE_KEY = PLAN_NAME + "_records";
+const NICKNAME_KEY = PLAN_NAME + "_nickname";
+const CERT_SHOWN_KEY = PLAN_NAME + "_cert_shown";
+const WAVE_KEY = PLAN_NAME + "_wave";   // 当天点波浪计数 {date, count, settled}
+
+// 证书最终称号：按累计词数分三档
+const CERT_TITLES = [
+  { min: 20, title: "文法サロンの達成者", emoji: "🏆" },
+  { min: 15, title: "文法の神", emoji: "👑" },
+  { min: 10, title: "文法の侍", emoji: "⚔️" }
+];
+
+// 今日总结称号配置（按当日词数从高到低）
+const SUMMARY_TITLES = [
+  { min: 10, title: "文法の王！", emoji: "⚡", text: "もはや説明不要。あなたがルールだ。", effect: "gold" },
+  { min: 5,  title: "大波を乗りこなす者！", emoji: "🌊", text: "その勢い、誰にも止められない！", effect: "crown" },
+  { min: 3,  title: "今日のMVP！", emoji: "👹", text: "素晴らしい集中力！文法の鬼！", effect: "oni" },
+  { min: 2,  title: "やるじゃん！", emoji: "💮", text: "コツコツが勝つコツ。その調子！", effect: "flower" },
+  { min: 0,  title: "今日も一歩前進！", emoji: "🌱", text: "小さな積み重ねが、大きな力に。", effect: "fade" }
+];
+
+// 星期映射（getDay(): 0=日 ... 6=土）
+const WEEKDAYS = ["日","月","火","水","木","金","土"];
+
+/* =========================================================
+   数据读写（带异常处理，兼容隐私模式）
+   ========================================================= */
+function loadRecords(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  }catch(e){
+    console.warn("读取本地数据失败：", e);
+    showToast("本地保存不可用，本次データは保存されません");
+    return {};
+  }
+}
+function saveRecords(records){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+    return true;
+  }catch(e){
+    console.warn("写入本地数据失败：", e);
+    showToast("本地保存不可用，今回の打卡は保存されません");
+    return false;
+  }
+}
+
+/* =========================================================
+   当天点波浪计数（点波浪只累加，点总结才写入记录流）
+   ========================================================= */
+// 读取当天计数，若日期不是今天则重置为 0
+function loadWave(){
+  try{
+    const raw = localStorage.getItem(WAVE_KEY);
+    if(!raw) return { date: getTodayKey(), count: 0, settled: 0 };
+    const obj = JSON.parse(raw);
+    if(obj.date !== getTodayKey()) return { date: getTodayKey(), count: 0, settled: 0 };
+    return obj;
+  }catch(e){
+    return { date: getTodayKey(), count: 0, settled: 0 };
+  }
+}
+function saveWave(obj){
+  try{ localStorage.setItem(WAVE_KEY, JSON.stringify(obj)); return true; }
+  catch(e){ return false; }
+}
+
+/* =========================================================
+   日期处理（一律使用本地年月日，规避微信/iOS 的 UTC 时区坑）
+   ========================================================= */
+// 把 Date 对象格式化为本地 YYYY-MM-DD
+function formatKey(d){
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const day = String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
+}
+// 今天的本地 key
+function getTodayKey(){
+  return formatKey(new Date());
+}
+// 在 YYYY-MM-DD 基础上加 n 天（可负）
+function addDays(key, n){
+  const [y,m,d] = key.split("-").map(Number);
+  const dt = new Date(y, m-1, d);
+  dt.setDate(dt.getDate()+n);
+  return formatKey(dt);
+}
+// 由日期推算星期（日→曜日）
+function getWeekday(key){
+  const [y,m,d] = key.split("-").map(Number);
+  return WEEKDAYS[new Date(y, m-1, d).getDay()] + "曜日";
+}
+// 窗口起点 = 最早打卡日（只要有任意一条记录就算那天）；无记录时为今天
+function getWindowStart(records){
+  const keys = Object.keys(records);
+  if(keys.length === 0) return getTodayKey();
+  return keys.sort()[0];
+}
+// 某天是否有至少一条打卡记录
+function hasRecordOn(records, key){
+  return Array.isArray(records[key]) && records[key].length > 0;
+}
+// 今天是否在窗口内：下界=最早打卡日，上界=硬锁定 PLAN_END
+function isInWindow(today, start){
+  return today >= start && today <= PLAN_END;
+}
+// 显示用日期：7/17 金曜日
+function displayDate(key){
+  const [y,m,d] = key.split("-").map(Number);
+  return `${m}/${d} ${getWeekday(key)}`;
+}
+
+/* =========================================================
+   UI 更新
+   ========================================================= */
+let records = loadRecords();   // 全局记录对象
+let todayKey = getTodayKey();  // 今天
+
+// 顶部：标题 / 鼓励语 / 进度条
+function renderHeader(){
+  document.getElementById("title").textContent = `🌊 ${PLAN_NAME}`;
+  document.getElementById("subtitle").textContent = `目標：${PLAN_DAYS}日間`;
+  document.getElementById("quote").textContent = pickQuote();
+
+  const start = getWindowStart(records);
+  // 累计打卡天数：统计 records 中有记录的天数（同一天多次只算 1 天）
+  const doneDays = Object.keys(records)
+    .filter(k => hasRecordOn(records, k))
+    .length;
+  let totalWords = 0;
+  Object.values(records).forEach(arr=>{
+    if(Array.isArray(arr)) arr.forEach(r=> totalWords += (r.words||0));
+  });
+  // 累计语法直接与波浪挂钩：加上今天已点波浪但尚未总结的次数
+  totalWords += getTodayWaveCount();
+  const remain = Math.max(0, PLAN_GOAL - totalWords);
+
+  document.getElementById("progressText").textContent = `已坚持 ${doneDays}/${PLAN_DAYS} 天　累計 ${totalWords} 个文法`;
+  document.getElementById("goalTip").textContent = remain>0 ? `あと ${remain} 日で目標達成！` : `目標達成！おめでとう！`;
+  document.getElementById("progressFill").style.width = (doneDays/PLAN_DAYS*100) + "%";
+}
+
+// 随机鼓励语（打卡后尽量换一句不同的）
+let lastQuote = "";
+function pickQuote(){
+  let q;
+  do{ q = QUOTES[Math.floor(Math.random()*QUOTES.length)]; }
+  while(q === lastQuote && QUOTES.length>1);
+  lastQuote = q;
+  return q;
+}
+
+// 浪花印记：10 格，按累计打卡天数点亮，最后一格特殊 🌊
+function renderFlowers(){
+  const container = document.getElementById("flowers");
+  container.innerHTML = "";
+  const doneCount = Object.keys(records)
+    .filter(k => hasRecordOn(records, k))
+    .length;
+  for(let i=0;i<PLAN_DAYS;i++){
+    let emoji = "🌫️";
+    if(i < doneCount) emoji = (i === PLAN_DAYS-1) ? "🌊" : "💧";
+    const span = document.createElement("span");
+    span.textContent = emoji;
+    if(i < doneCount) span.classList.add("bloom");
+    container.appendChild(span);
+  }
+}
+
+// 打卡按钮状态（初始加载时）
+function renderButton(){
+  const btn = document.getElementById("checkinBtn");
+  const start = getWindowStart(records);
+  btn.classList.remove("done","ended");
+  if(getTodayWaveCount() > 0){
+    btn.classList.add("done");
+  }else if(!isInWindow(todayKey, start)){
+    btn.classList.add("ended");
+  }
+}
+
+// 记录流（按日期倒序，每天的多条记录按时间倒序）
+function renderRecords(){
+  const box = document.getElementById("records");
+  box.innerHTML = "";
+  const keys = Object.keys(records).filter(k=>Array.isArray(records[k]) && records[k].length>0).sort().reverse();
+  if(keys.length === 0){
+    box.innerHTML = `<div class="empty">まだ記録がありません</div>`;
+    return;
+  }
+  keys.forEach(key=>{
+    const arr = records[key];
+    // 每条记录独立卡片
+    arr.slice().reverse().forEach((r, idx)=>{
+      const card = document.createElement("div");
+      card.className = "record";
+      const dateLabel = arr.length > 1
+        ? `${displayDate(key)} ${r.time||""}`
+        : displayDate(key);
+      card.innerHTML = `
+      <div class="top">
+        <span class="date">${dateLabel}</span>
+        <span class="words">🌊 ${r.words}个文法</span>
+      </div>
+      <div class="stamp">済</div>
+      <button class="diary-toggle" data-key="${key}" data-idx="${idx}">✏️ 日記</button>
+      <div class="diary-box" id="diary-${key}-${idx}">
+        <textarea placeholder="今日の気持ちを書こう…">${r.diary||""}</textarea>
+        <button class="diary-save" data-key="${key}" data-idx="${idx}">保存</button>
+      </div>
+      ${r.diary ? `<div class="diary-text">📝 ${escapeHtml(r.diary)}</div>` : ""}
+    `;
+      box.appendChild(card);
+    });
+  });
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+// 一次性全量渲染
+function renderAll(){
+  renderHeader();
+  renderFlowers();
+  renderButton();
+  renderRecords();
+  updateSummaryBtn();
+}
+
+// 自绘和风 toast
+let toastTimer = null;
+function showToast(text){
+  const t = document.getElementById("toast");
+  t.textContent = text;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> t.classList.remove("show"), 1800);
+}
+
+// 打卡即时鼓励语：从浪花按钮上方随机弹出，约 1.5 秒后逐渐变浅消失
+let cheerTimer = null;
+let cheerFadeTimer = null;
+function showCheer(){
+  const el = document.getElementById("cheerPopup");
+  const msg = CHEER_MESSAGES[Math.floor(Math.random() * CHEER_MESSAGES.length)];
+  el.textContent = msg;
+
+  // 重置状态并显示
+  clearTimeout(cheerTimer);
+  clearTimeout(cheerFadeTimer);
+  el.classList.remove("fade");
+  // 强制重排，确保动画可重新触发
+  void el.offsetWidth;
+  el.classList.add("show");
+
+  // 约 1.2 秒后开始淡出（越来越浅）
+  cheerTimer = setTimeout(()=>{
+    el.classList.add("fade");
+  }, 1200);
+
+  // 完全隐藏并清理
+  cheerFadeTimer = setTimeout(()=>{
+    el.classList.remove("show","fade");
+  }, 1800);
+}
+
+// 根据单次打卡词数匹配称号（从高到低遍历）
+function getTitleByCount(count){
+  for(const t of TITLE_THRESHOLDS){
+    if(count >= t.min) return t;
+  }
+  return TITLE_THRESHOLDS[TITLE_THRESHOLDS.length - 1];
+}
+
+// ===== 今日总结相关 =====
+// 获取今日所有打卡记录的词数总和
+function getTodayWords(){
+  const arr = records[todayKey];
+  if(!Array.isArray(arr) || arr.length === 0) return 0;
+  return arr.reduce((sum, r)=> sum + (r.words || 0), 0);
+}
+
+// 今天点波浪的累计次数（临时计数，尚未写入记录流）
+function getTodayWaveCount(){
+  return loadWave().count;
+}
+
+// 根据今日词数匹配总结称号
+function getSummaryTitle(words){
+  for(const t of SUMMARY_TITLES){
+    if(words >= t.min) return t;
+  }
+  return SUMMARY_TITLES[SUMMARY_TITLES.length - 1];
+}
+
+// 更新总结按钮状态
+function updateSummaryBtn(){
+  const btn = document.getElementById("summaryBtn");
+  const todayWords = getTodayWords();
+  const waveCount = getTodayWaveCount();
+
+  if(todayWords > 0 || waveCount > 0){
+    btn.disabled = false;
+    btn.classList.remove("disabled");
+    btn.textContent = "📋 今日のまとめ";
+  }else{
+    btn.disabled = true;
+    btn.classList.add("disabled");
+    btn.textContent = "📋 今日のまとめ（先に打卡してください）";
+  }
+}
+
+// 显示总结弹窗
+function showSummaryModal(){
+  // 点总结时：把「上次总结到现在」新增的波浪次数写入记录流
+  const wave = loadWave();
+  const interval = wave.count - (wave.settled || 0);
+  if(interval > 0){
+    if(!Array.isArray(records[todayKey])) records[todayKey] = [];
+    records[todayKey].push({
+      words: interval,
+      diary: "",
+      time: new Date().toLocaleTimeString("ja-JP", {hour:"2-digit",minute:"2-digit"})
+    });
+    saveRecords(records);
+    wave.settled = wave.count;
+    saveWave(wave);
+    // 记录变化后刷新界面
+    renderHeader();
+    renderFlowers();
+    renderRecords();
+  }
+
+  const todayWords = getTodayWords();
+  if(todayWords === 0){
+    showToast("先に打卡してください");
+    return;
+  }
+
+  const doneDays = Object.keys(records).filter(k => hasRecordOn(records, k)).length;
+  const titleObj = getSummaryTitle(todayWords);
+
+  // 填充内容
+  document.getElementById("summaryTitle").textContent = `📋 第${doneDays}天サマリー`;
+  document.getElementById("summaryDate").textContent =
+    new Date().toLocaleDateString("ja-JP", { year:"numeric", month:"long", day:"numeric" })
+    + ` (${getWeekday(todayKey)})`;
+  document.getElementById("summaryWords").textContent = todayWords;
+
+  // 称号
+  const badge = document.getElementById("summaryBadge");
+  badge.textContent = titleObj.emoji + " " + titleObj.title;
+  badge.className = "summary-badge";
+
+  // 称号文案
+  document.getElementById("summaryBadgeText").textContent = titleObj.text;
+
+  // 特效
+  const card = document.getElementById("summaryCard");
+  card.className = "summary-card";
+
+  // 清除旧特效元素
+  document.getElementById("summaryEffects").innerHTML = "";
+
+  switch(titleObj.effect){
+    case "gold":
+      card.classList.add("gold-flash");
+      spawnGoldSparks();
+      break;
+    case "crown":
+      badge.classList.add("crown-anim");
+      break;
+    case "oni":
+      badge.classList.add("oni-anim");
+      break;
+    case "flower":
+      badge.classList.add("flower-anim");
+      break;
+    case "fade":
+    default:
+      badge.classList.add("fade-anim");
+      break;
+  }
+
+  document.getElementById("summaryOverlay").classList.add("show");
+}
+
+// 金色闪光粒子
+function spawnGoldSparks(){
+  const container = document.getElementById("summaryEffects");
+  const emojis = ["✨","⚡","💛","⭐","🌟"];
+  for(let i = 0; i < 12; i++){
+    setTimeout(()=>{
+      const el = document.createElement("span");
+      el.className = "summary-spark";
+      el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      el.style.left = (20 + Math.random() * 60) + "%";
+      el.style.top = (10 + Math.random() * 50) + "%";
+      el.style.setProperty("--dx", (Math.random() - .5) * 120 + "px");
+      el.style.setProperty("--dy", (Math.random() - .5) * 120 + "px");
+      el.style.animationDelay = "0s";
+      container.appendChild(el);
+      setTimeout(()=>{ if(el.parentNode) el.parentNode.removeChild(el); }, 1600);
+    }, i * 100);
+  }
+}
+
+// 关闭总结弹窗
+function closeSummaryModal(){
+  document.getElementById("summaryOverlay").classList.remove("show");
+  document.getElementById("summaryEffects").innerHTML = "";
+}
+
+// ===== 昵称管理 =====
+function getNickname(){
+  try{ return localStorage.getItem(NICKNAME_KEY) || ""; }
+  catch(e){ return ""; }
+}
+function saveNickname(name){
+  try{ localStorage.setItem(NICKNAME_KEY, name.trim()); return true; }
+  catch(e){ return false; }
+}
+
+// 弹出昵称输入框（返回 Promise，用户确认后 resolve）
+function promptNickname(){
+  return new Promise((resolve)=>{
+    const existing = getNickname();
+    const overlay = document.getElementById("nicknameOverlay");
+    const input = document.getElementById("nicknameInput");
+    const confirmBtn = document.getElementById("nicknameConfirm");
+
+    input.value = existing;
+    overlay.classList.add("show");
+    input.focus();
+
+    const onConfirm = ()=>{
+      const name = input.value.trim();
+      if(!name){ showToast("名前を入力してください"); return; }
+      saveNickname(name);
+      overlay.classList.remove("show");
+      cleanup();
+      resolve(name);
+    };
+
+    const onKeydown = (e)=>{ if(e.key==="Enter") onConfirm(); };
+
+    const onOverlayClick = (e)=>{
+      if(e.target.id === "nicknameOverlay"){
+        const name = input.value.trim();
+        if(!name){ showToast("名前を入力してください"); return; }
+        saveNickname(name);
+        overlay.classList.remove("show");
+        cleanup();
+        resolve(name);
+      }
+    };
+
+    const cleanup = ()=>{
+      confirmBtn.removeEventListener("click", onConfirm);
+      input.removeEventListener("keydown", onKeydown);
+      overlay.removeEventListener("click", onOverlayClick);
+    };
+
+    confirmBtn.addEventListener("click", onConfirm);
+    input.addEventListener("keydown", onKeydown);
+    overlay.addEventListener("click", onOverlayClick);
+  });
+}
+
+// ===== 证书相关 =====
+// 根据累计词数匹配最终称号
+function getCertTitle(totalWords){
+  for(const t of CERT_TITLES){
+    if(totalWords >= t.min) return t;
+  }
+  return null; // 不满足最低 100 词
+}
+
+// 计算累计词数和打卡天数
+function getTotalStats(){
+  let totalWords = 0;
+  const doneDays = Object.keys(records)
+    .filter(k => hasRecordOn(records, k))
+    .length;
+
+  Object.values(records).forEach(arr=>{
+    if(Array.isArray(arr)) arr.forEach(r=> totalWords += (r.words||0));
+  });
+  return { totalWords, doneDays };
+}
+
+// 是否满足证书触发条件
+function isCertEligible(){
+  const { totalWords, doneDays } = getTotalStats();
+  return doneDays >= PLAN_DAYS && totalWords >= 10;
+}
+
+// 证书是否已展示过
+function isCertShown(){
+  try{ return localStorage.getItem(CERT_SHOWN_KEY) === "1"; }
+  catch(e){ return false; }
+}
+function markCertShown(){
+  try{ localStorage.setItem(CERT_SHOWN_KEY, "1"); return true; }
+  catch(e){ return false; }
+}
+
+// 显示证书弹窗
+async function showCertModal(){
+  const { totalWords, doneDays } = getTotalStats();
+  const titleObj = getCertTitle(totalWords);
+  if(!titleObj) return; // 不满足条件不弹
+
+  // 如果没有昵称，先弹出昵称输入框
+  let nickname = getNickname();
+  if(!nickname){
+    nickname = await promptNickname();
+    if(!nickname) return;
+  }
+
+  // 填充证书内容
+  document.getElementById("certName").textContent = nickname;
+  document.getElementById("certWords").textContent = totalWords;
+  document.getElementById("certDays").textContent = doneDays;
+  document.getElementById("certSeal").textContent = titleObj.emoji + " " + titleObj.title;
+  document.getElementById("certDate").textContent =
+    new Date().toLocaleDateString("ja-JP", { year:"numeric", month:"long", day:"numeric" });
+
+  // 显示证书
+  document.getElementById("certOverlay").classList.add("show");
+  markCertShown();
+
+  // 樱花特效
+  startSakura();
+}
+
+// 关闭证书
+function closeCertModal(){
+  document.getElementById("certOverlay").classList.remove("show");
+  stopSakura();
+}
+
+// 尝试触发证书（打卡后或页面初始化时调用）
+async function tryShowCert(){
+  if(!isCertEligible()) return;
+  // 如果页面初始化时已完成但未展示过 → 展示
+  // 打卡后一定展示（因为条件刚刚满足）
+  await showCertModal();
+}
+
+// 显示激励弹窗
+function showTitleModal(titleObj){
+  const overlay = document.getElementById("titleModalOverlay");
+  const card = document.getElementById("titleModalCard");
+  const emojiEl = document.getElementById("titleModalEmoji");
+  const titleEl = document.getElementById("titleModalTitle");
+  const descEl = document.getElementById("titleModalDesc");
+
+  // 先清除所有 class
+  card.className = "title-modal-card";
+  if(titleObj.cls) card.classList.add(titleObj.cls);
+
+  emojiEl.textContent = titleObj.emoji;
+  titleEl.textContent = titleObj.title;
+  descEl.textContent = titleObj.desc;
+
+  overlay.classList.add("show");
+
+  // 神降临 → 樱花飘落
+  if(titleObj.sakura) startSakura();
+}
+
+// 关闭弹窗
+function closeTitleModal(){
+  const overlay = document.getElementById("titleModalOverlay");
+  overlay.classList.remove("show");
+  stopSakura();
+}
+
+// 樱花飘落动画
+let sakuraTimer = null;
+function startSakura(){
+  stopSakura();
+  const container = document.getElementById("sakuraContainer");
+  container.classList.add("active");
+
+  // 每 200ms 生成一朵樱花，持续 5 秒
+  const spawn = ()=>{
+    const el = document.createElement("span");
+    el.className = "sakura";
+    el.textContent = "🌸";
+    el.style.left = Math.random() * 100 + "%";
+    el.style.animationDuration = (3 + Math.random() * 3) + "s";
+    el.style.fontSize = (18 + Math.random() * 18) + "px";
+    el.style.animationDelay = "0s";
+    container.appendChild(el);
+
+    // 动画结束后移除
+    setTimeout(()=>{ if(el.parentNode) el.parentNode.removeChild(el); }, 6000);
+  };
+
+  spawn(); // 立即生成第一朵
+  sakuraTimer = setInterval(spawn, 200);
+  // 5 秒后停止生成新樱花
+  setTimeout(()=> stopSakura(), 5000);
+}
+
+function stopSakura(){
+  clearInterval(sakuraTimer);
+  sakuraTimer = null;
+  const container = document.getElementById("sakuraContainer");
+  container.classList.remove("active");
+  // 延迟清除所有樱花元素（让最后的动画播完）
+  setTimeout(()=>{ container.innerHTML = ""; }, 6000);
+}
+
+/* =========================================================
+   事件绑定
+   ========================================================= */
+// 打卡主按钮（点波浪 = 只累加计数，不写记录流）
+document.getElementById("checkinBtn").addEventListener("click", ()=>{
+  const start = getWindowStart(records);
+
+  // 窗口已结束 → 计划终止
+  if(!isInWindow(todayKey, start)){
+    showToast("本計画は終了しました");
+    return;
+  }
+
+  // 累加当天波浪计数
+  const wave = loadWave();
+  wave.count += 1;
+  saveWave(wave);
+
+  // 波浪标记今天已点过
+  const btn = document.getElementById("checkinBtn");
+  btn.classList.add("done");
+
+  // 刷新头部（累计语法即时跟随波浪变化）
+  renderHeader();
+  updateSummaryBtn();
+
+  // 弹出即时鼓励语
+  showCheer();
+});
+
+// 记录流内的日记展开 / 保存（事件委托）
+document.getElementById("records").addEventListener("click", (e)=>{
+  const tg = e.target.closest(".diary-toggle");
+  if(tg){
+    const key = tg.dataset.key;
+    const idx = tg.dataset.idx;
+    const box = document.getElementById(`diary-${key}-${idx}`);
+    if(box) box.classList.toggle("open");
+    return;
+  }
+  const sv = e.target.closest(".diary-save");
+  if(sv){
+    const key = sv.dataset.key;
+    const idx = parseInt(sv.dataset.idx, 10);
+    const ta = document.querySelector(`#diary-${key}-${idx} textarea`);
+    if(ta && Array.isArray(records[key]) && records[key][idx]){
+      records[key][idx].diary = ta.value.trim();
+      saveRecords(records);
+      renderRecords();
+      showToast("日記を保存しました");
+    }
+    return;
+  }
+});
+
+// 弹窗关闭：点遮罩层或按钮
+document.getElementById("titleModalOverlay").addEventListener("click", (e)=>{
+  if(e.target.id === "titleModalOverlay") closeTitleModal();
+});
+document.getElementById("titleModalClose").addEventListener("click", closeTitleModal);
+
+// 证书弹窗关闭
+document.getElementById("certOverlay").addEventListener("click", (e)=>{
+  if(e.target.id === "certOverlay") closeCertModal();
+});
+document.getElementById("certClose").addEventListener("click", closeCertModal);
+
+// 今日总结按钮
+document.getElementById("summaryBtn").addEventListener("click", showSummaryModal);
+
+// 总结弹窗关闭
+document.getElementById("summaryOverlay").addEventListener("click", (e)=>{
+  if(e.target.id === "summaryOverlay") closeSummaryModal();
+});
+document.getElementById("summaryClose").addEventListener("click", closeSummaryModal);
+
+/* =========================================================
+   数据备份（导出/导入 JSON）
+   ========================================================= */
+// 导出：把所有 localStorage 中与本计划相关的数据打包为 JSON 并下载
+document.getElementById("exportBtn").addEventListener("click", ()=>{
+  try{
+    const backup = {
+      plan: PLAN_NAME,
+      exportedAt: new Date().toISOString(),
+      records: loadRecords(),
+      nickname: getNickname(),
+      certShown: isCertShown()
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `文法サロン_バックアップ_${getTodayKey()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast("バックアップを出力しました！");
+  }catch(e){
+    showToast("导出に失敗しました");
+    console.error(e);
+  }
+});
+
+// 导入：读取 JSON 文件并恢复数据
+document.getElementById("importBtn").addEventListener("click", ()=>{
+  document.getElementById("importFile").click();
+});
+
+document.getElementById("importFile").addEventListener("change", (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev)=>{
+    try{
+      const backup = JSON.parse(ev.target.result);
+      if(!backup.records || typeof backup.records !== "object"){
+        showToast("無効なバックアップファイルです");
+        return;
+      }
+      // 恢复数据
+      saveRecords(backup.records);
+      if(backup.nickname) saveNickname(backup.nickname);
+      if(backup.certShown) markCertShown();
+      else{
+        try{ localStorage.removeItem(CERT_SHOWN_KEY); }catch(e){}
+      }
+      showToast("バックアップを復元しました！再読み込みします…");
+      setTimeout(()=> location.reload(), 1200);
+    }catch(err){
+      showToast("バックアップの読込に失敗しました");
+      console.error(err);
+    }
+  };
+  reader.readAsText(file);
+  // 重置 input 以便重复导入同一文件
+  e.target.value = "";
+});
+
+/* =========================================================
+   初始化
+   ========================================================= */
+renderAll();
+
+// 页面加载后，检查是否已完成计划且未展示过证书 → 弹出证书
+if(isCertEligible()){
+  tryShowCert();
+}
+</script>
+</body>
+</html>
